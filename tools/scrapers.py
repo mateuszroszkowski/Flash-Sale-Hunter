@@ -80,7 +80,7 @@ class XKomScraper(Scraper):
                 old_price, new_price = self._parse_prices_from_html(sale)
                 sold, remaining = self._parse_quantities_from_html(sale)
                 remaining_time = self._parse_end_time_from_html(sale)
-                sale = FlashSale(url[8:22], sale_name, item_name, old_price, new_price, sold, remaining, remaining_time)
+                sale = FlashSale(url[8:20], sale_name, item_name, old_price, new_price, sold, remaining, remaining_time)
                 print(sale)
             else:
                 print("No flash sale found on {}".format(url))
