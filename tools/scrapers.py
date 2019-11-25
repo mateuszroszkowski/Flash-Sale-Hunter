@@ -33,6 +33,8 @@ class MoreleScraper(Scraper):
                 item_name = sale.find("div", attrs={"class": "promo-box-name"}).text.replace('\n','')
                 old_price, new_price = self._parse_prices_from_html(sale)
                 sold, remaining = self._parse_quantities_from_html(sale)
+                if remaining == "0":
+                    sold, remaining = "ALL", "OUT OF STOCK"
                 remaining_time = self._parse_end_time_from_html(sale)
                 sale = FlashSale(url[8:22], sale_name, item_name, old_price, new_price, sold, remaining, remaining_time)
                 print(sale)
