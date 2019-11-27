@@ -92,9 +92,7 @@ class XKomScraper(Scraper):
         end_time = self._select_time_object_from_script_body(script)
         current_time = datetime.datetime.now().replace(microsecond=0)
         end_time = end_time - current_time
-        hours, seconds = divmod(end_time.seconds, 3600)
-        minutes, seconds = divmod(seconds, 60)
-        return datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
+        return end_time
 
     def _parse_prices_from_html(self, html):
         old = html.find("div", attrs={"class": "old-price"}).text.replace('\n','')
@@ -115,6 +113,8 @@ class XKomScraper(Scraper):
         time = re.findall(r"\bDate\(.+?\)", script.text)[0]
         time = time[5:len(time) - 1]
         time = [number for number in time.split(',') if number.isdigit()]
+        # In js Date implementation months' indices start from 0, so we have to add 1 to obtain actual month number.
+        time[1] = str(int(time[1]) + 1)
         time = "{}-{}-{} {}:{}:{}".format(*time)
         time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
         return time
