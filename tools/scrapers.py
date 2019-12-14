@@ -54,7 +54,8 @@ class MoreleScraper(Scraper):
     def _parse_prices_from_html(self, html):
         old = html.find("div", attrs={"class": "promo-box-old-price"}).text.replace('\n','')
         new = html.find("div", attrs={"class": "promo-box-new-price"}).text.replace('\n','')
-        old, new = [o for o in old.split() if o.isdigit()], [n for n in new.split() if n.isdigit()]
+        old = [o for o in old.split() if not "zł" in o]
+        new = [n for n in new.split() if not "zł" in n]
         old, new = " ".join(old), " ".join(new)
         return old, new
 
