@@ -1,8 +1,9 @@
 from __future__ import absolute_import
-from .deals import FlashSale
+from .deals import FlashSale, FlashSaleMultiItem
 
 import requests
 import datetime
+from requests_html import HTMLSession
 import re
 from bs4 import BeautifulSoup
 
@@ -119,3 +120,64 @@ class XKomScraper(Scraper):
         time = "{}-{}-{} {}:{}:{}".format(*time)
         time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
         return time
+
+class EuroScraper(Scraper):
+ 
+    def scrap(self):
+        url = "https://www.euro.com.pl/"
+        try:
+            session = HTMLSession()
+            response = session.get(url)
+            response.html.render()
+            content = BeautifulSoup(response.html.html, "html5lib")
+            sale = content.find("div", attrs={"class": "promo-products hotDeals"})
+            if sale is not None:
+                sale_name = sale.find("div", attrs={"class": "category-name"}).text.split()[0]
+                tmp_products = sale.findAll("div", attrs={"product-info"})
+                products = []
+                parsed_products = set()
+                for p in tmp_products:
+                    item_name = p.find("h3", attrs={"class": "product-name"}).text
+                    if item_name not in parsed_products:
+                        product = {}
+                        product["item_name"] = p.find("h3", attrs={"class": "product-name"}).text
+                        product["old_price"], product["new_price"] = self._parse_prices_from_html(p)
+                        product["sold"], product["remaining"] = self._parse_quantities_from_html(p)
+                        parsed_products.add(item_name)
+                        products.append(product)
+                remaining_time = self._parse_end_time_from_html(sale)
+                sale = FlashSaleMultiItem(url[8:23], sale_name, products, remaining_time)
+                print(sale)
+        except requests.exceptions.RequestException as e:
+            print(e)
+ 
+    def _parse_end_time_from_html(self, html):
+        time = html.find("div", attrs={"id": "time-counter"}).text.replace(" ", "").split(":")
+        time = datetime.timedelta(hours=int(time[0]), minutes=int(time[1]), seconds=int(time[2]))
+        return time
+ 
+    def _parse_prices_from_html(self, html):
+        new = html.find("strong", attrs={"class": "product-price"})
+        old = html.find("span", attrs={"class": "product-old-price"})
+        if new is not None:
+            new = new.text
+            new = [n for n in new.split() if not "zł" in n]
+            new = " ".join(new)
+        else:
+            new = "N/A"
+        if old is not None:
+            old = old.text
+            old = [o for o in old.split() if not "zł" in o]
+            old = " ".join(old)
+        else:
+            old = "N/A"
+        return old, new
+ 
+    def _parse_quantities_from_html(self, html):
+        # euro does not provide quantity of items
+        sold, remaining = "N/A", "N/A"
+        return sold, remaining
+ 
+    def _parse_item_name_from_html(self, html):
+        name = html.find("h3", attrs={"class": "product-name"}).text
+        return name
