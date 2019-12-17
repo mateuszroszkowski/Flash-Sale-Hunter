@@ -42,5 +42,5 @@ items sold:\t{}
 items left:\t{}\n""".format(
             index + 1, product["item_name"], product["old_price"],
             product["new_price"], product["sold"], product["remaining"])
-        string_representation += "time left: {}".format(self.time_left)
+        string_representation += "time left:\t{}".format(self.time_left)
         return string_representation
